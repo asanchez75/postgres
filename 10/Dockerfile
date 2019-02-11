@@ -169,7 +169,7 @@ VOLUME /var/lib/postgresql/data
 
 # HypoPG is a PostgreSQL extension, adding support for Hypothetical Indexes. It’s compatible with PostgreSQL 9.2 and above.
 # it is used by the latest version of SIDES
-RUN apt-get update && apt-get install -y git wget zip postgresql-server-dev-9.6 build-essential
+RUN apt-get update && apt-get install -y git wget zip postgresql-server-dev-10 build-essential
 RUN cd /usr/local/src && \
     wget https://github.com/HypoPG/hypopg/archive/master.zip && \
     unzip master.zip && \
