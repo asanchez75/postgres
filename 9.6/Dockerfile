@@ -5,7 +5,7 @@ RUN set -ex; \
 	if ! command -v gpg > /dev/null; then \
 		apt-get update; \
 		apt-get install -y --no-install-recommends \
-			gnupg \
+			gnupg2 \
 			dirmngr \
 		; \
 		rm -rf /var/lib/apt/lists/*; \
@@ -24,17 +24,17 @@ RUN set -eux; \
 # grab gosu for easy step-down from root
 ENV GOSU_VERSION 1.11
 RUN set -x \
-	&& apt-get update && apt-get install -y --no-install-recommends ca-certificates wget && rm -rf /var/lib/apt/lists/* \
+	&& apt-get update && apt-get install -y --no-install-recommends ca-certificates wget unzip && rm -rf /var/lib/apt/lists/* \
 	&& wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" \
 	&& wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" \
 	&& export GNUPGHOME="$(mktemp -d)" \
-	&& gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
-	&& gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
+	&& gpg2 --batch --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+	&& gpg2 --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
 	&& { command -v gpgconf > /dev/null && gpgconf --kill all || :; } \
 	&& rm -rf "$GNUPGHOME" /usr/local/bin/gosu.asc \
 	&& chmod +x /usr/local/bin/gosu \
 	&& gosu nobody true \
-	&& apt-get purge -y --auto-remove ca-certificates wget
+	&& apt-get purge -y --auto-remove 
 
 # make the "en_US.UTF-8" locale so postgres will be utf-8 enabled by default
 RUN set -eux; \
@@ -64,8 +64,8 @@ RUN set -ex; \
 # uid                  PostgreSQL Debian Repository
 	key='B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8'; \
 	export GNUPGHOME="$(mktemp -d)"; \
-	gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
-	gpg --batch --export "$key" > /etc/apt/trusted.gpg.d/postgres.gpg; \
+	gpg2 --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
+	gpg2 --batch --export "$key" > /etc/apt/trusted.gpg.d/postgres.gpg; \
 	command -v gpgconf > /dev/null && gpgconf --kill all; \
 	rm -rf "$GNUPGHOME"; \
 	apt-key list
@@ -169,10 +169,10 @@ RUN mkdir -p "$PGDATA" && chown -R postgres:postgres "$PGDATA" && chmod 777 "$PG
 VOLUME /var/lib/postgresql/data
 
 
-RUN apt-get update && apt-get install -y git wget zip postgresql-server-dev-9.6 build-essential
 
 # HypoPG is a PostgreSQL extension, adding support for Hypothetical Indexes. It’s compatible with PostgreSQL 9.2 and above.
 # it is used by the latest version of SIDES
+RUN apt-get update && apt-get install -y git wget zip postgresql-server-dev-9.6 build-essential
 RUN cd /usr/local/src && \
     wget https://github.com/HypoPG/hypopg/archive/master.zip && \
     unzip master.zip && \

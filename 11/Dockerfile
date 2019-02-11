@@ -5,7 +5,7 @@ RUN set -ex; \
 	if ! command -v gpg > /dev/null; then \
 		apt-get update; \
 		apt-get install -y --no-install-recommends \
-			gnupg \
+			gnupg2 \
 			dirmngr \
 		; \
 		rm -rf /var/lib/apt/lists/*; \
@@ -28,8 +28,8 @@ RUN set -x \
 	&& wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" \
 	&& wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" \
 	&& export GNUPGHOME="$(mktemp -d)" \
-	&& gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
-	&& gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
+	&& gpg2 --batch --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+	&& gpg2 --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
 	&& { command -v gpgconf > /dev/null && gpgconf --kill all || :; } \
 	&& rm -rf "$GNUPGHOME" /usr/local/bin/gosu.asc \
 	&& chmod +x /usr/local/bin/gosu \
@@ -64,8 +64,8 @@ RUN set -ex; \
 # uid                  PostgreSQL Debian Repository
 	key='B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8'; \
 	export GNUPGHOME="$(mktemp -d)"; \
-	gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
-	gpg --batch --export "$key" > /etc/apt/trusted.gpg.d/postgres.gpg; \
+	gpg2 --batch --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
+	gpg2 --batch --export "$key" > /etc/apt/trusted.gpg.d/postgres.gpg; \
 	command -v gpgconf > /dev/null && gpgconf --kill all; \
 	rm -rf "$GNUPGHOME"; \
 	apt-key list
@@ -166,6 +166,17 @@ ENV PATH $PATH:/usr/lib/postgresql/$PG_MAJOR/bin
 ENV PGDATA /var/lib/postgresql/data
 RUN mkdir -p "$PGDATA" && chown -R postgres:postgres "$PGDATA" && chmod 777 "$PGDATA" # this 777 will be replaced by 700 at runtime (allows semi-arbitrary "--user" values)
 VOLUME /var/lib/postgresql/data
+
+# HypoPG is a PostgreSQL extension, adding support for Hypothetical Indexes. It’s compatible with PostgreSQL 9.2 and above.
+# it is used by the latest version of SIDES
+RUN apt-get update && apt-get install -y git wget zip postgresql-server-dev-9.6 build-essential
+RUN cd /usr/local/src && \
+    wget https://github.com/HypoPG/hypopg/archive/master.zip && \
+    unzip master.zip && \
+    cd  /usr/local/src/hypopg-master && \
+    make && \
+    make install
+
 
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN ln -s usr/local/bin/docker-entrypoint.sh / # backwards compat

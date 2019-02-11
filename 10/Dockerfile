@@ -167,6 +167,16 @@ ENV PGDATA /var/lib/postgresql/data
 RUN mkdir -p "$PGDATA" && chown -R postgres:postgres "$PGDATA" && chmod 777 "$PGDATA" # this 777 will be replaced by 700 at runtime (allows semi-arbitrary "--user" values)
 VOLUME /var/lib/postgresql/data
 
+# HypoPG is a PostgreSQL extension, adding support for Hypothetical Indexes. It’s compatible with PostgreSQL 9.2 and above.
+# it is used by the latest version of SIDES
+RUN apt-get update && apt-get install -y git wget zip postgresql-server-dev-9.6 build-essential
+RUN cd /usr/local/src && \
+    wget https://github.com/HypoPG/hypopg/archive/master.zip && \
+    unzip master.zip && \
+    cd  /usr/local/src/hypopg-master && \
+    make && \
+    make install
+
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN ln -s usr/local/bin/docker-entrypoint.sh / # backwards compat
 ENTRYPOINT ["docker-entrypoint.sh"]
