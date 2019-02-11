@@ -1,5 +1,5 @@
 # vim:set ft=dockerfile:
-FROM alpine:3.7
+FROM alpine:3.9
 
 # alpine includes "postgres" user/group in base install
 #   /etc/passwd:22:postgres:x:70:70::/var/lib/postgresql:/bin/sh
@@ -22,8 +22,8 @@ ENV LANG en_US.utf8
 RUN mkdir /docker-entrypoint-initdb.d
 
 ENV PG_MAJOR 9.5
-ENV PG_VERSION 9.5.13
-ENV PG_SHA256 5408b86a0b56fd0140c6a0016bf9179bc7817fa03d5571cca346c9ab122ea5ee
+ENV PG_VERSION 9.5.15
+ENV PG_SHA256 dbda3fdefd7f9fd5359a7989085aaef25c9f9d08816eda6378c2575d1ff55444
 
 RUN set -ex \
 	\

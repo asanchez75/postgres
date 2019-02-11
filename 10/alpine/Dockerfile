@@ -1,5 +1,5 @@
 # vim:set ft=dockerfile:
-FROM alpine:3.7
+FROM alpine:3.9
 
 # alpine includes "postgres" user/group in base install
 #   /etc/passwd:22:postgres:x:70:70::/var/lib/postgresql:/bin/sh
@@ -22,8 +22,8 @@ ENV LANG en_US.utf8
 RUN mkdir /docker-entrypoint-initdb.d
 
 ENV PG_MAJOR 10
-ENV PG_VERSION 10.4
-ENV PG_SHA256 1b60812310bd5756c62d93a9f93de8c28ea63b0df254f428cd1cf1a4d9020048
+ENV PG_VERSION 10.6
+ENV PG_SHA256 68a8276f08bda8fbefe562faaf8831cb20664a7a1d3ffdbbcc5b83e08637624b
 
 RUN set -ex \
 	\
@@ -66,6 +66,7 @@ RUN set -ex \
 #		tcl-dev \
 		util-linux-dev \
 		zlib-dev \
+		icu-dev \
 	\
 	&& cd /usr/src/postgresql \
 # update "DEFAULT_PGSOCKET_DIR" to "/var/run/postgresql" (matching Debian)
@@ -108,6 +109,7 @@ RUN set -ex \
 		--with-openssl \
 		--with-libxml \
 		--with-libxslt \
+		--with-icu \
 	&& make -j "$(nproc)" world \
 	&& make install-world \
 	&& make -C contrib install \

@@ -1,5 +1,5 @@
 # vim:set ft=dockerfile:
-FROM alpine:3.7
+FROM alpine:3.9
 
 # alpine includes "postgres" user/group in base install
 #   /etc/passwd:22:postgres:x:70:70::/var/lib/postgresql:/bin/sh
@@ -21,12 +21,9 @@ ENV LANG en_US.utf8
 
 RUN mkdir /docker-entrypoint-initdb.d
 
-ENV PG_MAJOR 9.3
-ENV PG_VERSION 9.3.23
-ENV PG_SHA256 1d981006dce3851e470b038e88bf496a80813c614c2e89ed7d2c7fb38e66f6cb
-
-ENV OSSP_UUID_VERSION 1.6.2
-ENV OSSP_UUID_SHA256 11a615225baa5f8bb686824423f50e4427acd3f70d394765bdff32801f0fd5b0
+ENV PG_MAJOR 11
+ENV PG_VERSION 11.1
+ENV PG_SHA256 90815e812874831e9a4bf6e1136bf73bc2c5a0464ef142e2dfea40cda206db08
 
 RUN set -ex \
 	\
@@ -69,31 +66,7 @@ RUN set -ex \
 #		tcl-dev \
 		util-linux-dev \
 		zlib-dev \
-	\
-# install OSSP uuid (http://www.ossp.org/pkg/lib/uuid/)
-# see https://github.com/docker-library/postgres/pull/255 for more details
-	&& wget -O uuid.tar.gz "https://www.mirrorservice.org/sites/ftp.ossp.org/pkg/lib/uuid/uuid-$OSSP_UUID_VERSION.tar.gz" \
-	&& echo "$OSSP_UUID_SHA256 *uuid.tar.gz" | sha256sum -c - \
-	&& mkdir -p /usr/src/ossp-uuid \
-	&& tar \
-		--extract \
-		--file uuid.tar.gz \
-		--directory /usr/src/ossp-uuid \
-		--strip-components 1 \
-	&& rm uuid.tar.gz \
-	&& ( \
-		cd /usr/src/ossp-uuid \
-		&& gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
-# explicitly update autoconf config.guess and config.sub so they support more arches/libcs
-		&& wget -O config.guess 'https://git.savannah.gnu.org/cgit/config.git/plain/config.guess?id=7d3d27baf8107b630586c962c057e22149653deb' \
-		&& wget -O config.sub 'https://git.savannah.gnu.org/cgit/config.git/plain/config.sub?id=7d3d27baf8107b630586c962c057e22149653deb' \
-		&& ./configure \
-			--build="$gnuArch" \
-			--prefix=/usr/local \
-		&& make -j "$(nproc)" \
-		&& make install \
-	) \
-	&& rm -rf /usr/src/ossp-uuid \
+		icu-dev \
 	\
 	&& cd /usr/src/postgresql \
 # update "DEFAULT_PGSOCKET_DIR" to "/var/run/postgresql" (matching Debian)
@@ -113,10 +86,11 @@ RUN set -ex \
 #		--enable-nls \
 		--enable-integer-datetimes \
 		--enable-thread-safety \
+		--enable-tap-tests \
 # skip debugging info -- we want tiny size instead
 #		--enable-debug \
 		--disable-rpath \
-		--with-ossp-uuid \
+		--with-uuid=e2fs \
 		--with-gnu-ld \
 		--with-pgport=5432 \
 		--with-system-tzdata=/usr/share/zoneinfo \
@@ -135,6 +109,7 @@ RUN set -ex \
 		--with-openssl \
 		--with-libxml \
 		--with-libxslt \
+		--with-icu \
 	&& make -j "$(nproc)" world \
 	&& make install-world \
 	&& make -C contrib install \
